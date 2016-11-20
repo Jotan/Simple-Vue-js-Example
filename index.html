@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+ <html>
+<head>
+<!-- Latest compiled and minified CSS -->
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<link rel="icon" href="plane.ico">
+<title>Ejercicio Aerolinea </title>
+</head>
+ <body>
+ <div class="container">
+ <pre>
+<form class="form-inline" id="calculo">
+<label >Seleccione el formato de tiempo</label>
+<select class="form-control" v-model="tiempo">
+  <option>Segundo</option>
+  <option>Minuto</option>
+  <option>Hora</option>
+
+</select>
+<label>Ingrese Tasa de Arribo (pasajeros/{{tiempo}}):</label>
+<input   class="form-control" name="" v-model="tasa_arribo" >
+<label>Ingrese Tasa de Servicio (pasajeros/{{tiempo}}):</label>
+<input  class="form-control" name="" v-model="tasa_servicio">
+<label for="numero_areas">Seleccione el número de áreas de seguridad:</label>
+<div class="form-group">
+<h3 style="position: absolute;  top:30%; left: 11%;">{{numero_areas}}</h3>
+<button type="button" class="btn btn-success" v-on:click="sumar" style="position: absolute; left:19%; top:32%;">+</button>
+<button type="button" class="btn btn-danger" v-on:click="restar" style="position: absolute; left:16%; top:32%;">-</button>
+</div>
+<!--<label ">Áreas existentes:</label>
+<div class="form-group">
+<h3 style="position: absolute;  top:44%; left: 11%;">{{areas_existentes}}</h3>
+<button type="button" class="btn btn-success" v-on:click="sumar_areas" style="position: absolute; left:19%; top:46%;">+</button>
+<button type="button" class="btn btn-danger" v-on:click="restar_areas" style="position: absolute; left:16%; top:46%;">-</button>
+</div>-->
+<button type="submit" class="btn btn-primary" v-on:click="calcular">Calcular</button>
+<div style="position: absolute; left:50%; top:-5%;">
+<h3>Resultados:</h3>
+<ul>
+<li>P0(probabilidad de que no exista ningún pasajero):<strong v-show="probabilidad">{{probabilidad}} %</strong></li>
+<li>P(probabilidad de que existan pasajeros en la fila):<strong v-show="probabilidad_menos">{{probabilidad_menos}} %</strong></li>
+<li>Lq(Número esperado de pasajeros en la fila):<strong v-show="lq">{{lq}}</strong>  </li>
+<li>Ls(Número esperado de pasajeros en el sistema):<strong v-show="ls">{{ls}}</strong>  </li>
+<li>Wq(Tiempo promedio de espera ({{tiempo}}s)):<strong v-show="wq">{{wq}}</strong>  </li>
+<li>Ws(Tiempo promedio de espera en la fila ({{tiempo}}s)):<strong v-show="ws">{{ws}}</strong> </li>
+</ul>
+</div>
+</form>
+
+</pre>
+<img class="img-responsive" style="position: absolute;top: 50%;left: 32%;width: 54%;height: 50%;" src="avion.gif">
+ </div>
+ </body>
+<script type="text/javascript" src="js/math.js"></script>
+<script type="text/javascript" src="js/vue.js"></script>
+<script type="text/javascript">
+	new Vue({
+		el:'#calculo',
+		data:{
+			tiempo:"Minuto",
+			tasa_arribo:"1.1025",
+			tasa_servicio:"4",
+			numero_areas:"1",
+			areas_existentes:"10",
+			calculo:"",
+			probabilidad:"",
+			probabilidad_menos:"",
+			lq:"",
+			ls:"",
+			wq:"",
+			ws:"",
+			pn:"",
+			ps:""
+		},
+		methods:{
+			sumar:function(){
+				if(this.numero_areas<this.areas_existentes){
+				
+				 this.numero_areas++;
+				}
+
+			},
+			restar:function(){
+				if(this.numero_areas>1){
+				
+				 this.numero_areas--;
+				}
+			},sumar_areas:function(){
+				
+				
+				 this.areas_existentes++;
+				
+
+			},
+			restar_areas:function(){
+				if(this.areas_existentes>1){
+				
+				 this.areas_existentes--;
+				}
+			},
+			calcular:function(){
+				event.preventDefault();
+				var tasa=this.tasa_arribo.replace(",",".");
+				var i=0,calculo1=0,calculo2=0,calculo3=0,p0=0,lq=0,ls=0,wq=0,ws=0;
+		
+				//this.calculo=Math.round(parseFloat(tasa));
+				this.calculo=parseFloat(tasa);
+				for (i=0;i<this.numero_areas;i++){
+				calculo1=calculo1 + math.eval('(('+this.calculo+'/'+this.tasa_servicio+')^'+i+')/(factorial('+i+'))');
+				
+
+				}
+
+
+			
+				calculo2=math.eval('1/(1-('+this.calculo+'/('+this.tasa_servicio+'*'+this.numero_areas+')))');
+				calculo3=math.eval('(('+this.calculo+'/'+this.tasa_servicio+')^'+this.numero_areas+')/(factorial('+this.numero_areas+'))');
+				p0=math.eval('1/('+calculo1+'+('+calculo2+'*'+calculo3+'))');
+
+				this.probabilidad=(p0*100);
+				this.probabilidad_menos=(100-this.probabilidad);
+				//LQ
+				lq=math.eval('((('+this.calculo+'/'+this.tasa_servicio+')^'+this.numero_areas+')*('+this.calculo+'*'+this.tasa_servicio+'*'+p0+'))/((factorial('+this.numero_areas+'-1))*((('+this.numero_areas+'*'+this.tasa_servicio+')-'+this.calculo+')^2))');
+				this.lq=lq;
+
+				//LS
+				ls=math.eval(lq+'+('+this.calculo+'/'+this.tasa_servicio+')');
+				this.ls=ls;
+				//WQ
+				wq=math.eval(lq+'/'+this.calculo);
+				this.wq=wq;
+				//WS
+				ws=math.eval(wq+'+(1/'+this.tasa_servicio+')');
+				this.ws=ws;
+				//PN
+
+				//PS
+			}
+		}
+	});
+
+</script>
+ </html>
